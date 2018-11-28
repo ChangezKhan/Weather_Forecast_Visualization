@@ -12,7 +12,7 @@ class DailyWeatherSpider(scrapy.Spider):
 
     custom_settings = {
         # specifies exported fields and order
-        'FEED_EXPORT_FIELDS': ["city_code", "date_created", "day_forecast", "night_forecast", "day_temperature", "night_temperature", "day_realfeel", "night_realfeel", "day_wind", "night_wind", "day_gusts", "night_gusts", "sunrise", "sunset", "moonrise", "moonset"]
+        'FEED_EXPORT_FIELDS': ["city_code", "date_created", "type_of", "forecast", "temperature", "realfeel", "wind", "gusts"]
       }
 
     def parse(self, response):
@@ -67,43 +67,46 @@ class DailyWeatherSpider(scrapy.Spider):
 
     def get_daily_weather(self, response):
             
-        item = WeatherForecastItem()
+        day_item = WeatherForecastItem()
         
-        item['city_code'] = response.meta['city_code']
-        item['date_created'] = datetime.datetime.today().strftime('%Y-%m-%d')
+        day_item['city_code'] = response.meta['city_code']
+        day_item['date_created'] = datetime.datetime.today().strftime('%Y-%m-%d')
+        day_item['type_of'] = "Day"
 
         temperature_list = response.xpath('//div[@id="detail-day-night"]//span/text()').extract()
 
         temp_day_temperature = temperature_list[0]
-        temp_night_temperature = temperature_list[4]
         temp_day_realfeel = temperature_list[2]
-        temp_night_realfeel = temperature_list[6]
 
         forecast_list = response.xpath('//div[@id="detail-day-night"]//div[@class="cond"]/text()').extract()
 
-        item['day_forecast'] = forecast_list[0].strip()
-        item['night_forecast'] = forecast_list[1].strip()
+        day_item['forecast'] = forecast_list[0].strip()
 
-        item['day_temperature'] = int(re.search(r'\d+', temp_day_temperature).group())
-        item['night_temperature'] = int(re.search(r'\d+', temp_night_temperature).group())
-        item['day_realfeel'] = int(re.search(r'\d+', temp_day_realfeel).group())
-        item['night_realfeel'] = int(re.search(r'\d+', temp_night_realfeel).group())
+        day_item['temperature'] = int(re.search(r'\d+', temp_day_temperature).group())
+        day_item['realfeel'] = int(re.search(r'\d+', temp_day_realfeel).group())
 
         wind_stats_list = response.xpath('//div[@id="detail-day-night"]//ul[@class="wind-stats"]//li/strong/text()').extract()
 
-        item['day_wind'] = wind_stats_list[0]
-        item['night_wind'] = wind_stats_list[2]
-        item['day_gusts'] = wind_stats_list[1]
-        item['night_gusts'] = wind_stats_list[3]
-
-        sun_desc_list = response.xpath('//div[@id="feature-sun"]//span/text()').extract()
-
-        item['sunrise'] = sun_desc_list[0]
-        item['sunset'] = sun_desc_list[1]
-
-        moon_desc_list = response.xpath('//div[@id="feature-moon"]//span/text()').extract()
-
-        item['moonrise'] = moon_desc_list[0]
-        item['moonset'] = moon_desc_list[1]
-
-        yield item
+        day_item['wind'] = wind_stats_list[0]
+        day_item['gusts'] = wind_stats_list[1]
+            
+        yield day_item
+        
+        night_item = WeatherForecastItem()
+        
+        night_item['city_code'] = response.meta['city_code']
+        night_item['date_created'] = datetime.datetime.today().strftime('%Y-%m-%d')
+        night_item['type_of'] = "Night"
+        
+        temp_night_temperature = temperature_list[4]
+        temp_night_realfeel = temperature_list[6]
+                
+        night_item['forecast'] = forecast_list[1].strip()
+        
+        night_item['temperature'] = int(re.search(r'\d+', temp_night_temperature).group())
+        night_item['realfeel'] = int(re.search(r'\d+', temp_night_realfeel).group())
+                
+        night_item['wind'] = wind_stats_list[2]
+        night_item['gusts'] = wind_stats_list[3]
+        
+        yield night_item
