@@ -8,4 +8,4 @@ To get weather information such temperature, realfeel temperature, etc. I have u
 
 ## DEMO
 
-![Weather Forecast Visualization](https://raw.githubusercontent.com/changezkhan/crm/master/wdv.gif)
+![Weather Forecast Visualization](https://raw.githubusercontent.com/changezkhan/crm/master/wfic.gif)
